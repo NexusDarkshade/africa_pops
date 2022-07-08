@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>ArcGIS API for JavaScript Tutorials: Display a map</title>
+		<link rel="stylesheet" href="styles.css">
+		
+		<link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css">
+		<script src="https://js.arcgis.com/4.24/"></script>
+		
+		<script>
+			require([
+				"esri/config",
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/FeatureLayer"
+			], function (esriConfig,Map, MapView, FeatureLayer) {
+				esriConfig.apiKey = "YOUR_API_KEY_HERE";
+				
+				const layer = new FeatureLayer({
+					url: "https://globe.yourdatasmarter.com/arcgis/rest/services/SampleWorldCities/MapServer/0/"
+				});
+				
+				const map = new Map({
+					basemap: "arcgis-imagery" // Basemap layer service
+				});
+				
+				const view = new MapView({
+					map: map,
+					center: [19.1, 1.6], // Longitude, latitude
+					zoom: 4, // Zoom level
+					container: "viewDiv" // Div element
+				});
+				
+				const query = {
+					where: "POP >= 74000 AND POP <= 76000",
+					spatialRelationship: "intersects",
+					geometry: {
+						xmin: -25.36041259765625,
+						ymin: -34.822021484375,
+						xmax: 63.49568740234375,
+						ymax: 37.340478515624994,
+						type: "extent"
+					},
+					outFields: ["CITY_NAME","POP"],
+					returnGeometry: true
+				};
+				
+				layer.queryFeatures(query).then((results) => {
+					const simpleMarkerSymbol = {
+						type: "simple-marker",
+						color: [226, 119, 40],  // Orange
+						outline: {
+							color: [255, 255, 255], // White
+							width: 1
+						}
+					};
+					
+					const popupTemplate = {
+						title: "{CITY_NAME}",
+						content: "Population: {POP}"
+					};
+					
+					results.features.map((feature) => {
+						feature.symbol = simpleMarkerSymbol;
+						feature.popupTemplate = popupTemplate;
+						return feature;
+					});
+					
+					console.log(results);
+					view.graphics.addMany(results.features);
+				}).catch((error) => {
+					console.log(error);
+				});
+			});
+		</script>
+	</head>
+	
+	<body>
+		<div id="viewDiv"></div>
+	</body>
+</html>
